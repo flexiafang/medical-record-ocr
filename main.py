@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog
 
+from request import getAuth
 from ui_MainWindow import Ui_MainWindow
 
 
@@ -17,7 +18,7 @@ class MedicalRecordOcr(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(MedicalRecordOcr, self).__init__()
         self.setupUi(self)
-        
+
         # 绑定槽函数
         self.imgSubmitButton.clicked.connect(self.imgUpload)
         self.imgSubmitButton.clicked.connect(self.convert)
@@ -34,28 +35,17 @@ class MedicalRecordOcr(QMainWindow, Ui_MainWindow):
         self.imgLabel.setScaledContents(True)
         self.imgLabel.setPixmap(QPixmap.fromImage(fixedImg))
 
-
     # 图片转文字
     def convert(self):
-        content = self.OCRlatlon("G:/CBIB/medical-record-ocr/pic/src/test.jpg")
+        content = self.ocr("G:/CBIB/medical-record-ocr/pic/src/test.jpg")
         self.treatmentTextEdit.setPlainText("content")
         # self.treatmentTextEdit.setPlainText(content)
 
-    # 获取百度API的权限码
-    def getAuth(self):
-        # client_id 为官网获取的API Key， client_secret 为官网获取的Secret Key
-        host = 'https://aip.baidubce.com/oauth/2.0/token' \
-               '?grant_type=client_credentials' \
-               '&client_id=imggz3EqEBHwS3Hqe7Kx6AEq' \
-               '&client_secret=DlfkAyKxN7Hdl3roThN7QVz99ySSQ0Kq'
-
-        response = requests.get(host)
-        return response.json()['access_token']
-
     # 识别文件
-    def OCRlatlon(self, filePath):
+    @staticmethod
+    def ocr(filepath):
         identification_results = []
-        img = Image.open(filePath)
+        img = Image.open(filepath)
         basicpath = "G:/CBIB/medical-record-ocr/pic/tmp/"
         if not os.path.exists(basicpath):
             try:
@@ -89,7 +79,7 @@ class MedicalRecordOcr(QMainWindow, Ui_MainWindow):
                 time.sleep(1)  # 防止超过QPS限制 引发报错
             request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic"
             params = {"image": img}
-            access_token = self.getAuth()  # 对应申请的 access_token
+            access_token = getAuth()  # 对应申请的 access_token
             request_url = request_url + "?access_token=" + access_token
             headers = {'content-type': 'application/x-www-form-urlencoded'}
             response = requests.post(request_url, data=params, headers=headers)
@@ -100,11 +90,16 @@ class MedicalRecordOcr(QMainWindow, Ui_MainWindow):
                 msg = data['words_result']
                 print(msg)
                 for m in msg:
-                    msg_info += m.get('words') + '\n'
+                    msg_info += m.get('words') + '\r\n'
             identification_results.append(msg_info.strip())
             g.close()
             os.remove(basicpath + str(f) + ".png")
+        print(identification_results)
         return identification_results
+
+    # 识别过程中显示进度条
+    def showProgressBar(self):
+        pass
 
 
 if __name__ == '__main__':

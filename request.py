@@ -8,7 +8,11 @@ import requests
 from PIL import Image
 
 
-def auth():
+def getAuth():
+    """
+    获取百度API的权限
+    """
+
     # client_id 为官网获取的API Key， client_secret 为官网获取的Secret Key
     host = 'https://aip.baidubce.com/oauth/2.0/token' \
            '?grant_type=client_credentials' \
@@ -37,7 +41,7 @@ def ocr(filepath, x1, y1, x2, y2):
         time.sleep(1)  # 防止超过QPS限制 引发报错
     request_url = "https://aip.baidubce.com/rest/2.0/ocr/v1/general_basic"
     params = {"image": img}
-    access_token = auth()  # 对应申请的 access_token
+    access_token = getAuth()  # 对应申请的 access_token
     request_url = request_url + "?access_token=" + access_token
     headers = {'content-type': 'application/x-www-form-urlencoded'}
     response = requests.post(request_url, data=params, headers=headers)
