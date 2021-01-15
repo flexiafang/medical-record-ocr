@@ -13,6 +13,11 @@ from PyQt5.QtWidgets import QMainWindow, QApplication, QFileDialog, QProgressBar
 from request import getAuth
 from ui_MainWindow import Ui_MainWindow
 
+import numpy as np
+import pandas as pd
+
+
+OCR_PATH = 'pic/src'
 
 class MedicalRecordOcr(QMainWindow, Ui_MainWindow):
 
@@ -22,13 +27,20 @@ class MedicalRecordOcr(QMainWindow, Ui_MainWindow):
 
         # 绑定槽函数
         self.imgSubmitButton.clicked.connect(self.imgUpload)
-        self.imgSubmitButton.clicked.connect(self.convert)
+        # self.imgSubmitButton.clicked.connect(self.convert)
+        self.saveButton.clicked.connect(self.save)
+
+        self.keys = ['姓名', '性别', '年龄', '门诊卡号', '科室', '类别', '就诊日期',
+                     '主诉', '现病史', '既往史', '体检', '初步诊断', '治疗意见']
+        self.values = []
 
     # 上传图片
     def imgUpload(self):
         img = QImage()
+
         path = QFileDialog.getOpenFileName(self, '选择图片', 'pic/src/', '*.jpg *.png *.gif *.jpeg')[0]
-        # print(path)
+        print(path)
+
         img.load(path)
         # 图片大小调整
         # print(self.imgLabel.size())
@@ -38,24 +50,24 @@ class MedicalRecordOcr(QMainWindow, Ui_MainWindow):
 
     # 图片转文字
     def convert(self):
-        # content = self.ocr('G:/CBIB/medical-record-ocr/pic/src/test.jpg')
-        content = self.ocr('pic/src/test.jpg')
-        # print(content)
+        # self.content = self.ocr('G:/CBIB/medical-record-ocr/pic/src/test.jpg')
+        self.values = self.ocr('pic/src/test.jpg')
+        # print(self.content)
 
-        self.nameLineEdit.setText(content[0])
-        self.sexLineEdit.setText(content[1])
-        self.ageLineEdit.setText(content[2])
-        self.cardNumberLineEdit.setText(content[3])
-        self.departmentLineEdit.setText(content[4])
-        self.typeLineEdit.setText(content[5])
-        self.timeLineEdit.setText(content[6])
-        self.mainDemandsLineEdit.setText(content[7])
-        self.presentIllnessLineEdit.setText(content[8])
-        self.previousIllnessLineEdit.setText(content[9])
-        self.allergyLineEdit.setText(content[10])
-        self.examinationLineEdit.setText(content[11])
-        self.diagnosisLineEdit.setText(content[12])
-        self.treatmentTextEdit.setText(content[13])
+        self.nameLineEdit.setText(self.values[0])
+        self.sexLineEdit.setText(self.values[1])
+        self.ageLineEdit.setText(self.values[2])
+        self.cardNumberLineEdit.setText(self.values[3])
+        self.departmentLineEdit.setText(self.values[4])
+        self.typeLineEdit.setText(self.values[5])
+        self.timeLineEdit.setText(self.values[6])
+        self.mainDemandsLineEdit.setText(self.values[7])
+        self.presentIllnessLineEdit.setText(self.values[8])
+        self.previousIllnessLineEdit.setText(self.values[9])
+        self.allergyLineEdit.setText(self.values[10])
+        self.examinationLineEdit.setText(self.values[11])
+        self.diagnosisLineEdit.setText(self.values[12])
+        self.treatmentTextEdit.setText(self.values[13])
 
     # 识别文件
     @staticmethod
@@ -125,6 +137,17 @@ class MedicalRecordOcr(QMainWindow, Ui_MainWindow):
 
         # print(identification_results)
         return identification_results
+
+    # 保存信息到excel中
+    def save(self):
+        datas = dict(zip(self.keys, self.values))
+        # print(datas)
+
+        try:
+            df = pd.DataFrame.from_dict(datas, orient='index')
+            df.to_excel('data.xlsx')
+        except Exception as e:
+            print(e)
 
     # 识别过程中显示进度条
     def showProgressBar(self):
